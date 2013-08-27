@@ -4,6 +4,14 @@
 // More documentation available in Google Docs: search for J-RUG
 // tsmith@janrain.com
 
+// 20130826 - V1.1
+// Fixed bug in URL creation (profiles# -> profiles%23)
+// Added API call counter to feedback
+// Fixed bug that was not catching duplicate interests
+// Removed two more letters from set of possible middle initials (I, Y)
+// Changed the error handling in the way that do_post_request works, so that
+// script does not crash when an exception is thrown
+
 session_start();
 
 include "includes/includes.php";
@@ -49,6 +57,9 @@ $baseParameters .= "&";
 $baseParameters .= "client_id=" . $client_id;
 $baseParameters .= "&";
 $baseParameters .= "client_secret=" . $client_secret;
+
+$verboseContent = "";
+$totalCount = 0;
 
 /***************************/
 // Begin main loop
@@ -107,7 +118,7 @@ for ($i = 1; $i <= $numberOfUsers; $i++) {
   /*******************************************/
   // givenName
 
-  $firstName = getFirstName($gender);
+  $firstName = getFirstName($gender, $yob);
   $verboseContent .= "<p>First name is: " . $firstName;
 
   /*******************************************/
@@ -157,7 +168,7 @@ for ($i = 1; $i <= $numberOfUsers; $i++) {
 
   $verboseContent .= "<p>Country: $country";
 
-  if ($verbosity > 1) { writeToOutput($verboseContent); }
+  writeToOutput($verboseContent, TRUE);
 
   writeToOutput("demographic data complete.");
 
@@ -167,7 +178,8 @@ for ($i = 1; $i <= $numberOfUsers; $i++) {
 
   // Build the API call to create a user
 
-  writeToOutput("Now building API call to create " . $userName . "...");
+  writeToOutput("API call globalID: " . $apiCallCount++);
+  writeToOutput("API call 1 of 3: Now building API call to create " . $userName . "...");
 
   // API call just for reference
   // https://yourdomain.com/entity.create?type_name=user&attributes={"firstName":"Bob","lastName":"Smith"}&client_id=12345678912345678912345678912345&client_secret=98765432198765432198765432198765
@@ -195,28 +207,39 @@ for ($i = 1; $i <= $numberOfUsers; $i++) {
 
   $verboseContent .= "<p>parameters: " . $parameters;
 
-  if ($verbosity > 1) { writeToOutput($verboseContent); }
-   
+  writeToOutput($verboseContent, TRUE);
+  
+  usleep(SLEEP_TIME);
+
   $jsonResponse = do_post_request($url, $parameters);
 
-  $jsonArray = json_decode($jsonResponse, true);
+  if ($jsonResponse == FALSE) { continue; }// skip to next iteration of loop}
 
-  if ($jsonArray["stat"] == "ok") {
-    $uuid = $jsonArray["uuid"];
-
-    writeToOutput($userName . " generated successfully!");
-    writeToOutput($userName . "'s uuid is: " . $uuid);
-
-  }
   else {
 
-    writeToOutput("Something went wrong with creating " . $userName . ". The json response is: " . $jsonResponse);
+    $jsonArray = json_decode($jsonResponse, true);
 
-    closeOutHTMLstream();
+    if ($jsonArray["stat"] == "ok") {
+      $uuid = $jsonArray["uuid"];
+
+      writeToOutput($userName . " generated successfully! (basic values)");
+      writeToOutput($userName . "'s uuid is: " . $uuid);
+
+    }
+
+    else {
+
+      writeToOutput("Something went wrong with creating " . $userName . ". The json response is: " . $jsonResponse);
+
+      // closeOutHTMLstream();
+    }
   }
+  
 
   writeToOutput("----------------------------------------");
-  writeToOutput("Now building API call to update " . $userName . " with profile ID...");
+  writeToOutput("API call globalID: " . $apiCallCount++);
+
+  writeToOutput("API call 2 of 3: Now building API call to update " . $userName . " with profile ID...");
 
   /**********************************/
 
@@ -247,11 +270,13 @@ for ($i = 1; $i <= $numberOfUsers; $i++) {
 
   $verboseContent .= "<p>parameters: " . $parameters;
 
-  if ($verbosity > 1) { writeToOutput($verboseContent); }
+  writeToOutput($verboseContent, TRUE);
+
+  usleep(SLEEP_TIME);
 
   $jsonResponse = do_post_request($url, $parameters);
 
-  if ($verbosity > 1) { writeToOutput($jsonResponse); }
+  writeToOutput($jsonResponse, TRUE);
 
   $jsonArray = json_decode($jsonResponse, true);
 
@@ -266,7 +291,7 @@ for ($i = 1; $i <= $numberOfUsers; $i++) {
 
     writeToOutput("Something went wrong with creating the profile ID for " . $userName . ". The json response is: " . $jsonResponse);
 
-    closeOutHTMLstream();
+    // closeOutHTMLstream();
 
   }
 
@@ -275,15 +300,17 @@ for ($i = 1; $i <= $numberOfUsers; $i++) {
 
   writeToOutput("-------------------------------");
 
-  writeToOutput("Now building API call for entity.update (to add psychographic data) to " . $userName . "...");
+  writeToOutput("API call globalID: " . $apiCallCount++);
+
+  writeToOutput("API call 3 of 3: Now building API call for entity.update (to add psychographic data) to " . $userName . "...");
 
   $apiCall = "entity.update";
 
   $url = $baseURL . $apiCall;
 
-  if ($verbosity > 1) { writeToOutput("<p>url: " . $url); }
+  writeToOutput("<p>url: " . $url, TRUE);
 
-  $theseParameters  = "attribute_name=profiles#" . $profileID;
+  $theseParameters  = "attribute_name=profiles%23" . $profileID;
   $theseParameters .= "&";
   $theseParameters .= "uuid=" . $uuid;
   $theseParameters .= "&";
@@ -324,8 +351,10 @@ for ($i = 1; $i <= $numberOfUsers; $i++) {
 
     $parameters = $baseParameters . "&" . $theseParameters;
 
-    if ($verbosity > 1) { writeToOutput("parameters: " . $parameters); }
+    writeToOutput("parameters: " . $parameters, TRUE);
    
+    usleep(SLEEP_TIME);
+
     $jsonResponse = do_post_request($url, $parameters);
 
     $jsonArray = json_decode($jsonResponse, true);
@@ -338,9 +367,9 @@ for ($i = 1; $i <= $numberOfUsers; $i++) {
     }
     else {
 
-      writeToOutput("Something went wrong with adding psychographic values to " . $userName . ". The json response is: " . $jsonResponse);
+      writeToOutput("Error: something went wrong with adding psychographic values to " . $userName . ". The json response is: " . $jsonResponse);
 
-      closeOutHTMLstream();
+      // closeOutHTMLstream();
 
     }
   }
@@ -397,12 +426,19 @@ function defineGlobals() {
   global $books;
   global $music;
   global $baseParameters;
+  global $apiCallCount;
+
+  $apiCallCount = 1;
 
   define("KEY_FILE_PATH", "/Users/tom/Documents/misc/misc.txt");
-  define("LOG_FILE_PATH", "/Applications/MAMP/htdocs/populateCapture/logs/captureLog.txt");
+  define("LOG_FILE_PATH", "/Applications/MAMP/htdocs/populateCapture/logs/captureLog.log");
   define("MAX_ITERATIONS", 100);
-  define("SLEEP_TIME", 250000); // in milliseconds. For example: 500000 = .5 secs
   define("MAX_INTEREST_COUNT", 5);
+
+  // This determines how long the script sleeps before
+  // each API call
+  define("SLEEP_TIME", 100000); // in milliseconds. For example: 500000 = .5 secs
+
 
   $psychGraph = array (
       "interests" => "interest",
@@ -488,7 +524,7 @@ function getPsychValues($categoryName, $itemName, $count) {
 
   $thisArray = $psychArrayNames[$categoryName];
 
-  $alreadyPicked;
+  $alreadyPicked = array();
 
   $thisJSONstring = "\"$categoryName\":[";
 
@@ -498,10 +534,11 @@ function getPsychValues($categoryName, $itemName, $count) {
     $thisItem = $thisArray[rand(0, (sizeof($thisArray) - 1))];
 
     // check to see if this item has already been chosen for this user
-    if (array_search($thisItem, $alreadyPicked) == FALSE) {
+    if ( ($i > 1) && (array_search($thisItem, $alreadyPicked) == FALSE)) {
 
       // The item is not in the array already, so we'll push it into the array. 
-      array_push($alreadyPicked, $thisItem);
+
+      $alreadyPicked[] = $thisItem;
 
       $thisJSONstring .= "{\"$itemName\":\"";
 
@@ -511,9 +548,23 @@ function getPsychValues($categoryName, $itemName, $count) {
 
     }
 
-    else { writeToOutput("Found a duplicate interest: " . $thisItem); } // just for some error checking
+    else { 
+
+      if ($i > 1) { writeToOutput("Found a duplicate interest: " . $thisItem); } // just for some error checking
+
+    }
 
   }
+
+/*
+  $tempString = "User's " . $categoryName . " are \n";
+
+  foreach ($alreadyPicked as $key => $value) {
+    $tempString .= $value . "\n";
+  }
+
+  writeToOutput($tempString, TRUE);
+*/
 
   // Trim off that last comma
   $thisJSONstring = rtrim($thisJSONstring, ",");
@@ -525,11 +576,13 @@ function getPsychValues($categoryName, $itemName, $count) {
 }
 
 // This function handles the POST requests
-// borrowed from
+// inspired by
 // http://wezfurlong.org/blog/2006/nov/http-post-from-php-without-curl/
 
-function do_post_request($url, $data, $optional_headers = null)
-{
+function do_post_request($url, $data, $optional_headers = null) {
+
+  global $content;
+
   $params = array('http' => array(
               'method' => 'POST',
               'content' => $data
@@ -543,43 +596,102 @@ function do_post_request($url, $data, $optional_headers = null)
   
   $fp = @fopen($url, 'rb', false, $ctx);
   
+  /*
   if (!$fp) {
     throw new Exception("Problem with $url, $php_errormsg");
   }
-  
+  */
+
+  if ($fp == FALSE) { 
+
+    // Let's try it one more time
+
+    writeToOutput("Trying a URL one more time... sleeping...");
+
+    usleep(SLEEP_TIME);
+
+    $fp = @fopen($url, 'rb', false, $ctx);
+
+    if ($fp == FALSE) {
+
+      $content .= "Error: Could not open the following URL:" . $url . $data;
+
+      writeToOutput ("Error: Could not open the following URL:" . $url . $data);
+    }
+    else { writeToOutput ("Sleeping worked!"); }
+  }
+
   $response = @stream_get_contents($fp);
   
+  /*
   if ($response === false) {
     throw new Exception("Problem reading data from $url, $php_errormsg");
+  }
+  */
+
+  if ($response === FALSE) { 
+
+    $content .= "Error: Could not open the following URL:" . $url;
+  
+    writeToOutput ("Error: problem with response from:" . $url);
+
   }
   
   return $response;
 }
 
 // Picks a random first name from the appropriate array
-function getFirstName($gender) {
+function getFirstName($gender, $yob) {
 
-	global $femaleFirstNames;
-	global $maleFirstNames;
+	global $femaleFirstNames1990census;
+  global $femaleFirstNames1980_1989;
+  global $femaleFirstNames1990_1999;
 
-	$listOfFnames = $femaleFirstNames;
+  global $maleFirstNames1990census;
+  global $maleFirstNames1980_1989;
+  global $maleFirstNames1990_1999;
 
-	if ($gender == "male") { $listOfFnames = $maleFirstNames; }
+  $arrayNames = array();
 
+  $arrayNames["male"]["default"] = $maleFirstNames1990census;
+  $arrayNames["male"]["eighties"] = $maleFirstNames1980_1989;
+  $arrayNames["male"]["nineties"] = $maleFirstNames1990_1999;
+
+  $arrayNames["female"]["default"] = $femaleFirstNames1990census;
+  $arrayNames["female"]["eighties"] = $femaleFirstNames1980_1989;
+  $arrayNames["female"]["nineties"] = $femaleFirstNames1990_1999;
+
+  // Default
+  $listOfFnames = $arrayNames[$gender]["default"];
+
+  $j = rand(1, 10);
+
+  if ($yob >= 1980 && $yob <= 1989) {
+    if ($j >= 1 && $j <= 6) { $listOfFnames = $arrayNames[$gender]["eighties"]; }
+    if ($j >= 7 && $j <= 8) { $listOfFnames = $arrayNames[$gender]["nineties"]; }
+  }
+  if ($yob >= 1990) {
+    if ($j >= 1 && $j <= 6) { $listOfFnames = $arrayNames[$gender]["nineties"]; }
+    if ($j >= 7 && $j <= 8) { $listOfFnames = $arrayNames[$gender]["eighties"]; }
+  }
+  
 	$fnamePos = rand(0, (sizeof($listOfFnames) - 1) );
 
 	return $listOfFnames[$fnamePos];
 
 }
 
-function writeToOutput($someString) {
+function writeToOutput($someString, $isVerboseContent = FALSE) {
   global $content;
   global $logFileHandle;
+  global $verbosity;
 
-  $content .= "<p>" . $someString . "</p>\n";
-
+  // always write all messages to log regardless of verbosity
   fwrite($logFileHandle, $someString . "\n");
 
+  if ( ($isVerboseContent == FALSE) || ($verbosity == 2 && $isVerboseContent == TRUE)) {
+      $content .= "<p>" . $someString . "</p>\n";
+  }
 }
 
 function initializeContent() {
