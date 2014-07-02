@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>J-RUG: Janrain Random User Generator</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        
+        <link rel="stylesheet" type="text/css" href = "styles/main.css"/>
+        
+        <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>-->
+
+        <script src = "includes/jquery/jquery-1.11.0.js"></script>
+
+    <script>
+
+        var thisSession = 0; // number of records created
+        var batchNo = 1; // number of batches
+        
+        $(document).ready(function(){
+        
+            // Authenticate using local key file
+            // This function fires when the user clicks on the "load local key file" button.
+            $("#checkStatus").click(function(){
+            
+                // clearMenus();
+                // closeSession();
+            
+                var url = 'authenticateLocal.php';
+                
+                $.post(url, function (data) {
+                                        
+                    if (data.foundServers === "OK") {
+                        $("#statusMessage").html("<p>Found at least one Capture server!</p><p>Please choose one from the list.</p>");
+                    }
+                    else {
+                        $("#statusMessage").html("<p>Sorry, we had some trouble with the local key file.</p>");
+                        $("#statusMessage").append("<p>Details below might be helpful.</p>");
+                        $("#statusMessage").append("<p>You might try the \"Enter credentials\" option.</p>");
+                    }
+                    
+                    $("#statusDetail").html(data.html);
+
+                }, "json");
+                
+                $("#statusDetail").fadeIn("slow");
+                
+            });
+            
+        });
+        
+        // This function loads the "manual entry" form when the user wants to
+        // enter their credentials manually (and clicks on the
+        // "Enter Credentials" button.
+
+        $(document).on('click', "#manualEntry", function(e) {
+            clearMenus();
+            closeSession();
+
+            var credForm = "<form id = 'serverCredsForm'>";
+            credForm += "<table border = '0'><tr>";
+            credForm += "<td>Capture server (apid_uri):</td><td><input type = 'text' size = '40' id = 'serverURL'></td></tr>";
+            credForm += "<tr><td>Client id:</td><td><input type = 'text' id = 'client_id' size = '40'></td></tr>";
+            credForm += "<tr><td>Client secret:</td><td><input type = 'text' id = 'client_secret' size = '40'></td></tr>";
+            credForm += "</table>";
+            credForm += "<input type = 'submit' class = 'client' id = 'serverCreds' value = 'Go'>";
+            credForm += "</form>";
+
+            $("#statusMessage").html(credForm);
+
+        });
+            
+        // checkServerCreds
+        // In Local Key mode, this functions handles when someone clicks
+        // on a particular Capture instance.
+        // In Enter Credentials mode, this function handles the when someone
+        // clicks the submit button.
+
+        var checkServerCredsURL = 'checkServerCreds.php';
+
+        $(document).on('click', '.client', function(e) {
+
+            event.preventDefault();
+
+            $("#statusDetail").empty();
+
+            $('#loader').show();
+
+            var thisData;
+
+            if ($(this).attr("id") === "serverCreds") {
+
+                thisData = {serverURL: $( "#serverURL" ).val(), client_id: $( "#client_id" ).val(), client_secret: $( "#client_secret" ).val()};                    
+
+            }
+            else {
+                thisData = {serverID: $(this).attr("id")};
+            }
+
+            $("#statusMessage").html("<p>Checking credentials and schema...</p>");
+
+            $.post(checkServerCredsURL, thisData, function (data) {
+
+                $('#loader').hide();
+
+                if (data.schemaStatus === "OK") {
+
+                    $("#statusMessage").html("<p>Great, credentials and schema are OK.");
+
+                    var content = "<p>How many users do you want to create?</p>";
+
+                    var batchSizes = new Array(10, 100, 500, 900, 1200, 1500, 3000);
+
+                    for (var i = 0; i < batchSizes.length; i++) {
+                        content += "<button class = 'userCount' id = " + batchSizes[i] + ">" + batchSizes[i] + "</button>";
+                    }
+                    
+                    // content += "<p></p>";
+                    
+                    // content += "<button class = 'deleteAll'>Delete all of the autogen users in this db</button>";
+
+                    $("#statusMessage").append(content);
+
+                    $("#statusDetail").html(data.html);   
+                    $("#statusDetail").fadeIn("slow");
+
+                    $('.menu').show();
+
+                    $('#serverName').html(data.serverName);
+                    $('#serverName').fadeIn("slow");
+
+                    $('#recordCount').html("Total records: " + data.totalCount);
+                    $('#recordCount').fadeIn("slow");
+
+                    $('#autogenUsers').html("Autogen users: " + data.autogenCount);
+                    $('#autogenUsers').fadeIn("slow");
+
+                    $('#newUsersTotal').html("New records: " + thisSession);
+                    $('#newUsersTotal').fadeIn("slow");
+
+               }
+               else { 
+                   $("#statusMessage").append("<p>Sorry, server creds did not check out.</p>");
+                   $("#statusDetail").html(data.html);
+
+                   if (data.schemaStatus === "incomplete") {
+                       $("#statusDetail").append("Click the button to add the field you need to the schema.");
+
+                       $("#statusDetail").append("<button id = 'modifySchema'>Modify schema</button>");
+
+                       $(document).on('click', '#modifySchema', function(e) {
+                            var url = "modifySchema.php";
+
+                            $.post(url, function (response) { 
+
+                                if (response.schemaStatus === "OK") {
+                                    $("#statusDetail").empty();
+                                    $("#statusMessage").html("<p>The schema should be OK now. Please click on the \"Load local key file\" button to check again.");
+                                }
+                                else {
+                                    $("#statusMessage").html("<p>Sorry, that didn't work for some reason.</p>");
+                                }
+
+                            }, "json");
+
+                        });
+
+                   }
+
+               }
+
+           }, "json");
+        });
+            
+        // generate users
+        // This is the function that sends the api call to the server to 
+        // actually create users
+        $(document).on('click', '.userCount', function(e) {
+
+            $("#statusDetail").empty();
+
+            $("#statusDetail").html("<p>Building users...");
+
+            $('#loader').show();
+
+            var numberOfUsers = $(this).attr("id");
+
+            var url = 'generateUsers.php';
+
+            $.post(url, {numberOfUsers: numberOfUsers}, function (data) {
+
+                $("#loader").hide();
+
+                if (data.status === "OK") {
+
+                    thisSession = thisSession + parseInt(numberOfUsers);
+
+                    $("#statusDetail").html(data.html);
+
+                    $('#recordCount').html("Total records: " + data.newTotalCount);
+
+                    $('#autogenUsers').html("Autogen users: " + data.newAutoCount);
+                    $('#newUsersTotal').html("New records: " + thisSession);
+
+                    // var batchDetails = "<div class = 'batchDetails' id = '" + data.batchStartTime + "'>";
+                    var batchDetails = "<div class = 'dynamicMenu' id = '" + data.batchStartTime + "'>";
+
+                    batchDetails += "batch #" + batchNo + "<br>";
+                    batchDetails += data.batchFinishTimeString + "<br>";
+                    batchDetails += "time: " + (data.batchFinishTime - data.batchStartTime) + " seconds<br>";
+                    batchDetails += "records: " + numberOfUsers + "<br>";
+                    batchDetails += "</div>";
+
+                    $('#batchContainer').prepend(batchDetails);
+                    $('#batchContainer').show();
+                    $('#' + data.batchStartTime).show();
+
+                    batchNo++;
+
+                }
+
+             }, "json");
+
+        });
+        
+        // delete all autogen users
+        // This is the function that sends the api call to the server to 
+        // delete all autogenerated users
+        $(document).on('click', '.deleteAll', function(e) {
+
+            $("#statusDetail").empty();
+            
+            $(".deleteAll").hide();
+
+            $("#statusDetail").html("<p>You clicked the 'delete all' button.</p>");
+            $("#statusDetail").append("<p>Are you sure you want to delete all of the autogenerated users in this database?</p>");
+            $("#statusDetail").append("<p><button id = 'yes'>Yes</button><button id = 'no'>No</button>");
+
+        });
+
+        $(document).on('click', '#yes', function(e) {
+
+            $("#statusDetail").empty();
+            
+            $("#statusDetail").html("<p>Deleting all users...</p>");
+
+            $('#loader').show();
+
+            // var numberOfUsers = $(this).attr("id");
+
+            var url = 'deleteUsers.php';
+
+            // $.post(url, {numberOfUsers: numberOfUsers}, function (data) {
+
+                // $("#loader").hide();
+
+                // if (data.status === "OK") {
+
+                    // thisSession = thisSession + parseInt(numberOfUsers);
+
+                    // $("#statusDetail").html(data.html);
+
+                    // $('#recordCount').html("Total records: " + data.newTotalCount);
+
+                    // $('#autogenUsers').html("Autogen users: " + data.newAutoCount);
+                    // $('#newUsersTotal').html("New records: " + thisSession);
+
+                    // var batchDetails = "<div class = 'dynamicMenu' id = '" + data.batchStartTime + "'>";
+
+                    // batchDetails += "batch #" + batchNo + "<br>";
+                    // batchDetails += data.batchFinishTimeString + "<br>";
+                    // batchDetails += "time: " + (data.batchFinishTime - data.batchStartTime) + " seconds<br>";
+                    // batchDetails += "records: " + numberOfUsers + "<br>";
+                    // batchDetails += "</div>";
+
+                    // $('#batchContainer').prepend(batchDetails);
+                    // $('#batchContainer').show();
+                    // $('#' + data.batchStartTime).show();
+
+                    // batchNo++;
+
+                // }
+
+             // }, "json");
+
+        });
+            
+        // Batch review button
+        $(document).on('click', '.batchDetails', function() {
+
+            var url = "output/" + $(this).attr("id") + ".html";
+
+            window.open(url);
+
+        });
+        
+        // Close session button
+        $(document).on('click', '#closeSessionButton', function() {
+
+            $.post("closeSession.php");
+
+            clearMenus();
+
+        });
+       
+        function clearMenus() {
+
+            $(".dynamicMenu").empty();
+            $(".dynamicMenu").hide();
+            $("hr.menu").hide();
+
+            $("#statusDetail").empty();
+
+            $("#statusMessage").html("<p>Click on an authentication method to get started.</p>");
+
+            thisSession = 0; // reset total number of users
+            batchNo = 1;
+            
+        }
+        
+        function closeSession() { $.post("closeSession.php"); }
+            
+    </script>
+
+    </head>
+
+    <body>
+        
+        <div id = 'main'>
+            
+            <h2>J-RUG: Janrain Random User Generator</h2>
+            
+            <div id = "leftCol">
+
+                <button id = 'checkStatus'>Load local key file</button>
+                <button id = 'manualEntry'>Enter credentials</button>
+                
+                <hr id = "top">
+
+                <div id = 'closeSessionCell'>
+                    <button id = 'closeSessionButton'>Close session</button>
+                </div>
+                                                    
+                <hr class = "menu">
+                
+                <div class = "dynamicMenu" id = 'serverName'></div>
+                <div class = "dynamicMenu" id = 'recordCount'></div>
+                <div class = "dynamicMenu" id = 'autogenUsers'></div>
+                <div class = "dynamicMenu" id = 'newUsersTotal'></div>
+                    
+                <hr class = "menu">
+                    
+                <div id = 'batchContainer'></div>
+                                          
+            </div> <!-- leftCol -->
+            
+            <div id = "userResults">
+                <p>Welcome to J-RUG.</p>
+                                
+                <div class = "status" id = "statusMessage">
+                    <p>Click on an authentication method to get started.</p>
+                </div>
+                
+                <div class = "status" id = "loader"><img src = "images/ajax-loader.gif" alt = "loading"/></div>
+                
+                <div class = "status" id = "statusDetail"></div>
+                
+            </div>
+
+        </div> <!-- main -->
+
+    </body>
+</html>

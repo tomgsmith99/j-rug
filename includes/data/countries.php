@@ -1,0 +1,29 @@
+<?php
+
+$countries	[	703	]=	"United States"	;
+$countries	[	786	]=	"Canada"	;
+$countries	[	838	]=	"United Kingdom"	;
+$countries	[	859	]=	"Australia"	;
+$countries	[	880	]=	"Germany"	;
+$countries	[	895	]=	"Ireland"	;
+$countries	[	907	]=	"France"	;
+$countries	[	919	]=	"Finland"	;
+$countries	[	931	]=	"Sweden"	;
+$countries	[	940	]=	"Spain"	;
+$countries	[	949	]=	"Brazil"	;
+$countries	[	956	]=	"Israel"	;
+$countries	[	963	]=	"Denmark"	;
+$countries	[	969	]=	"Mexico"	;
+$countries	[	975	]=	"Singapore"	;
+$countries	[	979	]=	"Russia"	;
+$countries	[	983	]=	"South Africa"	;
+$countries	[	987	]=	"Philippines"	;
+$countries	[	990	]=	"India"	;
+$countries	[	992	]=	"Indonesia"	;
+$countries	[	994	]=	"China"	;
+$countries	[	995	]=	"Japan"	;
+$countries	[	996	]=	"Argentina"	;
+$countries	[	997	]=	"The Netherlands"	;
+$countries	[	998	]=	"Belgium"	;
+$countries	[	999	]=	"Greece"	;
+$countries	[	1000	]=	"Turkey"	;

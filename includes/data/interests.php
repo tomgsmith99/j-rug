@@ -1,0 +1,53 @@
+<?php
+
+$interests[2]="aerobics";
+$interests[3]="amusement parks";
+$interests[5]="baking";
+$interests[9]="baseball";
+$interests[15]="bicycling";
+$interests[16]="bird-watching";
+$interests[17]="canoeing";
+$interests[19]="carpentry";
+$interests[24]="cats";
+$interests[25]="coding";
+$interests[32]="cooking";
+$interests[33]="cricket";
+$interests[38]="dogs";
+$interests[40]="exercising";
+$interests[42]="fishing";
+$interests[43]="fly fishing";
+$interests[48]="football";
+$interests[52]="gardening";
+$interests[54]="genealogy";
+$interests[59]="golf";
+$interests[55]="hang-gliding";
+$interests[57]="hiking";
+$interests[58]="hunting";
+$interests[59]="kayaking";
+$interests[60]="knitting";
+$interests[61]="macrame";
+$interests[62]="model trains";
+$interests[64]="motorcycles";
+$interests[65]="music (performing)";
+$interests[67]="parenting";
+$interests[68]="quilting";
+$interests[69]="racing";
+$interests[73]="reading";
+$interests[74]="roller coasters";
+$interests[75]="rowing";
+$interests[76]="rugby";
+$interests[78]="running";
+$interests[80]="sailing";
+$interests[81]="scrapbooking";
+$interests[84]="skiing";
+$interests[85]="skydiving";
+$interests[90]="soccer";
+$interests[91]="strategy games";
+$interests[93]="swimming";
+$interests[94]="surfing";
+$interests[95]="tennis";
+$interests[97]="travel";
+$interests[98]="writing";
+$interests[100]="video games";
+
+?>

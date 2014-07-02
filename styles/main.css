@@ -1,0 +1,144 @@
+.divTable{
+  display:table;         
+  width:auto;         
+  background-color:#eee;         
+  border: .5px solid  #666666;         
+  border-spacing:5px;/*cellspacing:poor IE support for  this*/
+  font-size: 12px;
+}
+.divRow{
+  display:table-row;
+  width:auto;
+  clear:both;
+}
+.divCell{
+  float:left;/*fix for  buggy browsers*/
+  display:table-column;         
+  width:160px;         
+  background-color:#ccc;  
+}
+.divCellNotOK {
+  float:left;/*fix for  buggy browsers*/
+  display:table-column;         
+  width:160px;         
+  background-color: #F80000;  
+}
+
+.divCellOK {
+  float:left;/*fix for  buggy browsers*/
+  display:table-column;         
+  width:160px;         
+  background-color: #66CC00;  
+}
+
+.serverNameCell {
+  float:left;/*fix for  buggy browsers*/
+  display:table-column;         
+  width:160px;         
+  background-color: #ccc;
+  text-align: right;
+}
+
+.statusBox{
+    border: .5px solid  #666666;
+    float: right;
+    vertical-align: top;
+    display: none;
+}
+
+#statusDetail {
+    border: .5px solid  #666666;
+    float: left;
+    vertical-align: top;
+    display: none;
+}
+
+#main {
+    width:600px;
+    text-align:center;
+    border: 1px solid  #666666;
+    position: relative;
+
+    font-family:"Calibri";
+    font-size: 14px;
+    
+    overflow: auto;
+
+}
+
+#leftCol{
+    /* border: 1px solid  #666666; */
+    float: left;
+    vertical-align: top;
+    width: 120px;
+    background-color: #828EFF;
+
+
+}
+/*
+light blue: #828EFF;
+complementray colors
+lighter blue: #9BA5FF
+tan: #B29837
+darker blue: #4953B2
+off white: #FFFAEA
+*/
+#userResults {
+    /* border: 1px solid  #666666; */
+    padding-left: 5px;
+    float: left;
+    width: 400px;
+    text-align: left;
+    vertical-align: top;
+
+}
+
+#loader {
+    display: none;
+}
+
+button { 
+    font-family:"Calibri";
+    font-size: 11px;
+    margin: 5px;
+
+}
+
+#foundServers {
+    display: none;
+}
+
+.dynamicMenu {
+    border: 1px solid  #B29837;
+    font-family: "Calibri";
+    font-size: 11px;
+    color: #FFFAEA;
+    display: none;
+    margin: 5px;
+    padding: 5px;
+}
+
+.batchDetails {
+    border: 1px solid  #B29837;
+    display: none;
+}
+
+#batchContainer {
+    border: none;
+    font-family: "Calibri";
+    font-size: 11px;
+    color: #FFFAEA;
+    display: none;
+}
+
+.menu {
+    display: none;
+}
+
+hr.menu {
+    width: 75%;
+}
+
+hr#top {
+    width: 75%
+}
