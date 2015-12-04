@@ -108,7 +108,7 @@ function createBatch ($batchSize, $i = 1) {
 
     }
     
-    $jsonResponse = uploadUserBatch($socialUserBatch);
+    $jsonResponse = uploadUserBatch("dataOnly", $socialUserBatch);
 
     $jsonArray = evaluateJSONresponse($jsonResponse, "createSocialUserBatch");
 
@@ -136,7 +136,7 @@ function createBatch ($batchSize, $i = 1) {
 
     }
     
-    $jsonResponse = uploadUserBatch($userBatch, "trad");
+    $jsonResponse = uploadUserBatch("dataOnly", $userBatch, "trad");
 
     $jsonArray = evaluateJSONresponse($jsonResponse, "createTradUserBatch");
 
